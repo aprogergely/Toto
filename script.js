@@ -15,8 +15,8 @@ brickImage.src = 'images/brick.png';
 let ballRadius = 10;
 let x = canvas.width / 2;
 let y = canvas.height - 30;
-let dx = 4;
-let dy = -4;
+//let dx = 4;
+//let dy = -4;
 let paddleHeight = 10;
 let paddleWidth = 100;
 let paddleX = (canvas.width - paddleWidth) / 2;
@@ -132,8 +132,8 @@ function resetGame() {
     bricks = JSON.parse(JSON.stringify(initialBricksState));
     x = canvas.width / 2;
     y = canvas.height - 30;
-    dx = 2;
-    dy = -2;
+    //dx = 4;
+    //dy = -4;
     paddleX = (canvas.width - paddleWidth) / 2;
     score = 0;
 }
@@ -171,6 +171,8 @@ function collisionDetection() {
 
 // Game Loop
 function draw() {
+    dx = 4;
+    dy = -4;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBricks();
     drawBall();
