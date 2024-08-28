@@ -32,6 +32,7 @@ const brickPadding = 10;
 const brickOffsetTop = 30;
 const brickOffsetLeft = 30;
 
+let bricks = [];
 let score = 0;
 
 // Event Listeners for paddle movement
