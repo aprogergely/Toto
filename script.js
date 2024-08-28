@@ -12,7 +12,7 @@ const brickImage = new Image();
 brickImage.src = 'images/brick.png';
 
 // Game Variables
-let ballRadius = 10;
+let ballRadius = 20;
 let x = canvas.width / 2;
 let y = canvas.height - 30;
 let dx = 2;
@@ -24,9 +24,9 @@ let rightPressed = false;
 let leftPressed = false;
 let initialBricksState;
 
-const brickRowCount = 3;
-const brickColumnCount = 5;
-const brickWidth = 75;
+const brickRowCount = 8;
+const brickColumnCount = 12;
+const brickWidth = 50;
 const brickHeight = 20;
 const brickPadding = 10;
 const brickOffsetTop = 30;
