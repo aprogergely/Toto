@@ -12,13 +12,13 @@ const brickImage = new Image();
 brickImage.src = 'images/brick.png';
 
 // Game Variables
-let ballRadius = 20;
+let ballRadius = 10;
 let x = canvas.width / 2;
 let y = canvas.height - 30;
 let dx = 2;
 let dy = -2;
-let paddleHeight = 10;
-let paddleWidth = 75;
+let paddleHeight = 20;
+let paddleWidth = 100;
 let paddleX = (canvas.width - paddleWidth) / 2;
 let rightPressed = false;
 let leftPressed = false;
