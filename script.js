@@ -32,14 +32,6 @@ const brickPadding = 10;
 const brickOffsetTop = 30;
 const brickOffsetLeft = 30;
 
-let bricks = [];
-for(let c = 0; c < brickColumnCount; c++) {
-    bricks[c] = [];
-    for(let r = 0; r < brickRowCount; r++) {
-        bricks[c][r] = { x: 0, y: 0, status: 1 };
-    }
-}
-
 let score = 0;
 
 // Event Listeners for paddle movement
