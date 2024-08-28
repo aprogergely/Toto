@@ -32,6 +32,15 @@ const brickPadding = 10;
 const brickOffsetTop = 30;
 const brickOffsetLeft = 30;
 
+const brickImage1 = new Image();
+brickImage1.src = 'images/brick_1.png';
+
+const brickImage2 = new Image();
+brickImage2.src = 'images/brick_2.png';
+
+const brickImage3 = new Image();
+brickImage3.src = 'images/brick_3.png';
+
 let bricks = [];
 let score = 0;
 
@@ -70,7 +79,13 @@ function initBricks() {
         bricks[c] = [];
         for(let r = 0; r < brickRowCount; r++) {
             let isPresent = Math.random() > 0.3; // 70% chance the brick is present
-            bricks[c][r] = { x: 0, y: 0, status: isPresent ? 1 : 0 };
+            if (isPresent) {
+                // Randomly assign a type to the brick (3, 2, or 1)
+                let brickType = Math.floor(Math.random() * 3) + 1;
+                bricks[c][r] = { x: 0, y: 0, status: brickType };
+            } else {
+                bricks[c][r] = { x: 0, y: 0, status: 0 }; // No brick
+            }
         }
     }
 }
@@ -78,11 +93,22 @@ function initBricks() {
 function drawBricks() {
     for(let c = 0; c < brickColumnCount; c++) {
         for(let r = 0; r < brickRowCount; r++) {
-            if(bricks[c][r].status == 1) {
+            let b = bricks[c][r];
+            if(b.status > 0) {
                 let brickX = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
                 let brickY = (r * (brickHeight + brickPadding)) + brickOffsetTop;
-                bricks[c][r].x = brickX;
-                bricks[c][r].y = brickY;
+                b.x = brickX;
+                b.y = brickY;
+                
+                let brickImage;
+                if(b.status === 3) {
+                    brickImage = brickImage3;
+                } else if(b.status === 2) {
+                    brickImage = brickImage2;
+                } else if(b.status === 1) {
+                    brickImage = brickImage1;
+                }
+
                 ctx.drawImage(brickImage, brickX, brickY, brickWidth, brickHeight);
             }
         }
@@ -124,10 +150,14 @@ function collisionDetection() {
     for(let c = 0; c < brickColumnCount; c++) {
         for(let r = 0; r < brickRowCount; r++) {
             let b = bricks[c][r];
-            if(b.status == 1) {
+            if(b.status > 0) {
                 if(x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
                     dy = -dy;
-                    b.status = 0;
+                    if(b.status > 1) {
+                        b.status -= 1; // Move to the next lower brick type
+                    } else {
+                        b.status = 0; // Brick disappears
+                    }
                     score++;
                     if(score == brickRowCount * brickColumnCount) {
                         alert("YOU WIN, CONGRATS!");
