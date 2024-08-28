@@ -22,6 +22,7 @@ let paddleWidth = 75;
 let paddleX = (canvas.width - paddleWidth) / 2;
 let rightPressed = false;
 let leftPressed = false;
+let initialBricksState;
 
 const brickRowCount = 3;
 const brickColumnCount = 5;
@@ -71,7 +72,16 @@ function drawPaddle() {
     ctx.drawImage(paddleImage, paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
 }
 
-// Draw Bricks
+function initBricks() {
+    for(let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for(let r = 0; r < brickRowCount; r++) {
+            let isPresent = Math.random() > 0.3; // 70% chance the brick is present
+            bricks[c][r] = { x: 0, y: 0, status: isPresent ? 1 : 0 };
+        }
+    }
+}
+
 function drawBricks() {
     for(let c = 0; c < brickColumnCount; c++) {
         for(let r = 0; r < brickRowCount; r++) {
@@ -86,11 +96,34 @@ function drawBricks() {
     }
 }
 
+// Capture the initial brick layout
+function saveInitialBricksState() {
+    initialBricksState = JSON.parse(JSON.stringify(bricks));
+}
+
 // Draw Score
 function drawScore() {
     ctx.font = "16px Arial";
     ctx.fillStyle = "#0095DD";
     ctx.fillText("Score: " + score, 8, 20);
+}
+
+// Reset the game state using the saved brick layout
+function resetGame() {
+    bricks = JSON.parse(JSON.stringify(initialBricksState));
+    x = canvas.width / 2;
+    y = canvas.height - 30;
+    dx = 2;
+    dy = -2;
+    paddleX = (canvas.width - paddleWidth) / 2;
+    score = 0;
+}
+
+// Modify the game over logic
+function gameOver() {
+    alert("GAME OVER");
+    resetGame();
+    draw();
 }
 
 // Collision Detection
@@ -149,4 +182,6 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
+initBricks();
+saveInitialBricksState();
 draw();
