@@ -80,14 +80,22 @@ function initBricks() {
     for(let c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
         for(let r = 0; r < brickRowCount; r++) {
-            let isPresent = Math.random() > 0.3; // 70% chance the brick is present
-            if (isPresent) {
-                // Randomly assign a type to the brick (3, 2, or 1)
-                let brickType = Math.floor(Math.random() * 3) + 1;
-                bricks[c][r] = { x: 0, y: 0, status: brickType };
-                initBrickCount++
+            // Check if the position has an NPC
+            let hasNPC = npcs.some(npc => npc.col === c && npc.row === r);
+
+            // If the position has an NPC or is below an NPC, ensure a brick is present
+            if (hasNPC || npcs.some(npc => npc.col === c && npc.row === r - 1)) {
+                bricks[c][r] = { x: 0, y: 0, status: 3 };  // Ensure a brick with type 3 (strongest)
+                initBrickCount++;
             } else {
-                bricks[c][r] = { x: 0, y: 0, status: 0 }; // No brick
+                let isPresent = Math.random() > 0.3;  // 70% chance the brick is present
+                if (isPresent) {
+                    let brickType = Math.floor(Math.random() * 3) + 1;
+                    bricks[c][r] = { x: 0, y: 0, status: brickType };
+                    initBrickCount++;
+                } else {
+                    bricks[c][r] = { x: 0, y: 0, status: 0 };  // No brick
+                }
             }
         }
     }
@@ -125,19 +133,25 @@ function saveInitialBricksState() {
 
 function initNPCs() {
     npcs = [];
-    for(let c = 0; c < brickColumnCount; c++) {
-        for(let r = 0; r < brickRowCount - 1; r++) { // Exclude the bottom row
-            if(bricks[c][r].status === 0 && bricks[c][r + 1].status > 0) {
-                // 30% chance to spawn an NPC
-                if (Math.random() > 0.7) {
-                    npcs.push({ x: c * (brickWidth + brickPadding) + brickOffsetLeft,
-                                y: r * (brickHeight + brickPadding) + brickOffsetTop,
-                                direction: 1,
-                                fallSpeed: 0,
-                                row: r,
-                                col: c });
-                }
-            }
+    let npcCount = Math.floor(Math.random() * 4) + 2; // Randomly select 2 to 5 NPCs
+    let npcPositions = [];
+
+    // Randomly select positions for NPCs
+    while (npcPositions.length < npcCount) {
+        let col = Math.floor(Math.random() * brickColumnCount);
+        let row = Math.floor(Math.random() * (brickRowCount - 1));  // Exclude bottom row
+
+        let position = { col, row };
+        if (!npcPositions.some(pos => pos.col === col && pos.row === row)) {
+            npcPositions.push(position);
+            npcs.push({
+                x: col * (brickWidth + brickPadding) + brickOffsetLeft,
+                y: row * (brickHeight + brickPadding) + brickOffsetTop,
+                direction: 1,
+                fallSpeed: 0,
+                row: row,
+                col: col
+            });
         }
     }
 }
@@ -171,6 +185,8 @@ function updateNPCs() {
                 npc.row += 1; // Move NPC to the next row
                 npc.fallSpeed = 0;
             }
+        } else {
+            npc.fallSpeed = 4;
         }
     });
 }
@@ -225,8 +241,27 @@ function collisionDetection() {
     }
 }
 
+function handlePaddleCollision() {
+    // Calculate the impact position 's'
+    let relativeImpact = (x - paddleX) / paddleWidth; // s as a percentage (0 to 1)
+    
+    // Ensure 's' is between 0 and 1 to avoid any out-of-bound issues
+    if(relativeImpact < 0) relativeImpact = 0;
+    if(relativeImpact > 1) relativeImpact = 1;
+    
+    // Calculate the new angle 'ß' based on the impact position
+    let beta = (178 * relativeImpact) + 1; // ß in degrees
+    
+    // Convert angle from degrees to radians for use with sin and cos
+    let betaRadians = beta * Math.PI / 180;
+    
+    // Calculate new dx and dy based on the angle
+    let speed = Math.sqrt(dx * dx + dy * dy); // Keep the same speed
+    dx = speed * Math.cos(betaRadians);
+    dy = -speed * Math.sin(betaRadians); // Negative because it should move upward
+}
 
-// Game Loop
+// Modify the game loop where the ball hits the paddle
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBricks();
@@ -244,7 +279,7 @@ function draw() {
         dy = -dy;
     } else if(y + dy > canvas.height - ballRadius) {
         if(x > paddleX && x < paddleX + paddleWidth) {
-            dy = -dy;
+            handlePaddleCollision(); // Update ball's angle after hitting the paddle
         } else {
             alert("GAME OVER");
             resetGame();
@@ -263,7 +298,7 @@ function draw() {
 }
 
 
-initBricks();
 initNPCs();
+initBricks();
 saveInitialBricksState();
 draw();
