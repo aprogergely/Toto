@@ -23,7 +23,7 @@ let paddleX = (canvas.width - paddleWidth) / 2;
 let rightPressed = false;
 let leftPressed = false;
 let initialBricksState;
-let initialNPCState;
+//let initialNPCState;
 
 const brickRowCount = 6;
 const brickColumnCount = 8;
@@ -137,7 +137,7 @@ function drawBricks() {
 // Capture the initial brick layout
 function saveInitialStates() {
     initialBricksState = JSON.parse(JSON.stringify(bricks));
-    initialNPCState = JSON.parse(JSON.stringify(npcs));
+    //initialNPCState = JSON.parse(JSON.stringify(npcs));
 }
 
 function initNPCs() {
@@ -210,7 +210,7 @@ function drawScore() {
 // Reset the game state using the saved brick layout
 function resetGame() {
     bricks = JSON.parse(JSON.stringify(initialBricksState));
-    npcs = JSON.parse(JSON.stringify(initialNPCState));
+    //npcs = JSON.parse(JSON.stringify(initialNPCState));
     x = canvas.width / 2;
     y = canvas.height - 40;
     //dx = 3;
