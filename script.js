@@ -164,6 +164,48 @@ function initNPCs() {
             });
         }
     }
+
+    let bossIndex = Math.floor(Math.random() * npcs.length); // Randomly pick one NPC to be the boss
+    let boss = npcs[bossIndex];
+    boss.isBoss = true;
+    boss.color = "blue"; // Blue color to distinguish the boss
+}
+
+function moveBoss() {
+    let ballMovingTowardsBoss = 
+        (dx > 0 && x > boss.x) || 
+        (dx < 0 && x < boss.x);
+
+    if (ballMovingTowardsBoss) {
+        let possibleMoves = [];
+
+        // Check the 2-tile distance range for possible moves
+        for (let deltaCol = -2; deltaCol <= 2; deltaCol++) {
+            if (deltaCol === 0) continue; // Skip current column
+
+            let newCol = boss.col + deltaCol;
+            if (newCol >= 0 && newCol < brickColumnCount) {
+                let newRow = boss.row;
+                let newX = newCol * (brickWidth + brickPadding) + brickOffsetLeft;
+                let newY = newRow * (brickHeight + brickPadding) + brickOffsetTop;
+
+                // Check if the target tile is empty and the tile above it is empty too
+                if (bricks[newCol][newRow].status === 0 && 
+                    (newRow - 1 < 0 || bricks[newCol][newRow - 1].status === 0)) {
+                    possibleMoves.push({ col: newCol, row: newRow, x: newX, y: newY });
+                }
+            }
+        }
+
+        // If there's a valid move, pick one randomly
+        if (possibleMoves.length > 0) {
+            let move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            boss.col = move.col;
+            boss.row = move.row;
+            boss.x = move.x;
+            boss.y = move.y;
+        }
+    }
 }
 
 function moveNPCs() {
@@ -181,8 +223,8 @@ function moveNPCs() {
 
 function drawNPCs() {
     npcs.forEach(npc => {
-        ctx.fillStyle = "#FF0000"; // Placeholder NPC color, replace with an image if needed
-        ctx.fillRect(npc.x, npc.y, brickWidth/2, brickHeight); // NPC size same as brick
+        ctx.fillStyle = npc.isBoss ? npc.color : "#FF0000"; // Boss is blue, others are red
+        ctx.fillRect(npc.x, npc.y, brickWidth / 2, brickHeight); // NPC size
     });
 }
 
@@ -278,28 +320,31 @@ function draw() {
     drawBricks();
     drawBall();
     drawPaddle();
-    drawNPCs(); // Draw NPCs
+    drawNPCs();
     drawScore();
     collisionDetection();
-    moveNPCs(); // Move NPCs
+    moveNPCs();
 
-    if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+    // Move the boss if needed
+    moveBoss();
+
+    if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
         dx = -dx;
     }
-    if(y + dy < ballRadius) {
+    if (y + dy < ballRadius) {
         dy = -dy;
-    } else if(y + dy > canvas.height - ballRadius) {
-        if(x > paddleX && x < paddleX + paddleWidth) {
-            handlePaddleCollision(); // Update ball's angle after hitting the paddle
+    } else if (y + dy > canvas.height - ballRadius) {
+        if (x > paddleX && x < paddleX + paddleWidth) {
+            adjustBallAngle(); // Adjust the ball's angle based on the paddle hit
         } else {
             alert("GAME OVER");
             resetGame();
         }
     }
 
-    if(rightPressed && paddleX < canvas.width - paddleWidth) {
+    if (rightPressed && paddleX < canvas.width - paddleWidth) {
         paddleX += 7;
-    } else if(leftPressed && paddleX > 0) {
+    } else if (leftPressed && paddleX > 0) {
         paddleX -= 7;
     }
 
