@@ -83,13 +83,17 @@ function initBricks() {
             // Check if the position has an NPC
             let hasNPC = npcs.some(npc => npc.col === c && npc.row === r);
 
-            // If the position has an NPC or is below an NPC, ensure a brick is present
-            if (npcs.some(npc => npc.col === c && npc.row === r - 1)) {
-                bricks[c][r] = { x: 0, y: 0, status: 3 };  // Ensure a brick with type 3 (strongest)
-                initBrickCount++;
+            // Place a brick below the NPC, but not on the NPC itself
+            if (hasNPC) {
+                bricks[c][r] = { x: 0, y: 0, status: 0 };  // No brick on the NPC tile
+                if (r + 1 < brickRowCount) {
+                    bricks[c][r + 1] = { x: 0, y: 0, status: 3 };  // Place a strong brick below the NPC
+                    initBrickCount++;
+                }
             } else {
+                // Normal random brick placement
                 let isPresent = Math.random() > 0.3;  // 70% chance the brick is present
-                if (isPresent && hasNPC === False) {
+                if (isPresent) {
                     let brickType = Math.floor(Math.random() * 3) + 1;
                     bricks[c][r] = { x: 0, y: 0, status: brickType };
                     initBrickCount++;
