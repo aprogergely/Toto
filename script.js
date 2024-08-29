@@ -49,6 +49,7 @@ let score = 0;
 
 let bossIndex;
 let boss;
+const bossMoveCooldown = 3000;
 
 // Event Listeners for paddle movement
 document.addEventListener("keydown", keyDownHandler, false);
@@ -171,10 +172,15 @@ function initNPCs() {
     bossIndex = Math.floor(Math.random() * npcs.length); // Randomly pick one NPC to be the boss
     boss = npcs[bossIndex];
     boss.isBoss = true;
-    //boss.color = "blue"; // Blue color to distinguish the boss
+    boss.lastMoveTime = Date.now();
 }
 
 function moveBoss() {
+    let currentTime = Date.now();
+    if (currentTime - boss.lastMoveTime < bossMoveCooldown) {
+        return; // If less than 3 seconds have passed, do nothing
+    }
+
     let ballMovingTowardsBoss = 
         (dx > 0 && x > boss.x) || 
         (dx < 0 && x < boss.x);
@@ -227,9 +233,9 @@ function moveNPCs() {
 function drawNPCs() {
     npcs.forEach(npc => {
         if (npc.isBoss) {
-            ctx.fillStyle = "#FF0000";
-        } else {
             ctx.fillStyle = "blue";
+        } else {
+            ctx.fillStyle = "#FF0000";
         }
         //ctx.fillStyle = npc.isBoss ? npc.color : "#FF0000"; // Boss is blue, others are red
         ctx.fillRect(npc.x, npc.y, brickWidth / 2, brickHeight); // NPC size
