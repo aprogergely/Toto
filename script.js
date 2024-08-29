@@ -14,9 +14,9 @@ brickImage.src = 'images/brick.png';
 // Game Variables
 let ballRadius = 10;
 let x = canvas.width / 2;
-let y = canvas.height - 30;
-let dx = 4;
-let dy = -4;
+let y = canvas.height - 40;
+let dx = 3;
+let dy = -3;
 let paddleHeight = 10;
 let paddleWidth = 100;
 let paddleX = (canvas.width - paddleWidth) / 2;
@@ -130,10 +130,11 @@ function initNPCs() {
             if(bricks[c][r].status === 0 && bricks[c][r + 1].status > 0) {
                 // 30% chance to spawn an NPC
                 if (Math.random() > 0.7) {
-                    npcs.push({ x: c * (brickWidth + brickPadding) + brickOffsetLeft, 
+                    npcs.push({ x: c * (brickWidth + brickPadding) + brickOffsetLeft,
                                 y: r * (brickHeight + brickPadding) + brickOffsetTop,
-                                direction: 1, 
-                                row: r, 
+                                direction: 1,
+                                fallSpeed: 0,
+                                row: r,
                                 col: c });
                 }
             }
@@ -144,10 +145,11 @@ function initNPCs() {
 function moveNPCs() {
     npcs.forEach(npc => {
         npc.x += npc.direction * 2; // NPC speed
+        npc.y += npc.fallSpeed
         
         // Change direction if NPC hits the edge of its brick area
         if(npc.x <= npc.col * (brickWidth + brickPadding) + brickOffsetLeft || 
-           npc.x >= (npc.col + 1) * (brickWidth + brickPadding) - brickPadding + brickOffsetLeft) {
+           npc.x >= (npc.col + 1) * (brickWidth + brickPadding) - brickPadding + brickOffsetLeft - brickWidth/2) {
             npc.direction *= -1;
         }
     });
@@ -163,9 +165,11 @@ function drawNPCs() {
 function updateNPCs() {
     npcs.forEach(npc => {
         if(bricks[npc.col][npc.row + 1] && bricks[npc.col][npc.row + 1].status === 0) {
-            npc.y += 2; // NPC falling speed
+            npc.direction = 0;
+            npc.fallSpeed = 2; // NPC falling speed
             if(npc.y >= (npc.row + 1) * (brickHeight + brickPadding) + brickOffsetTop) {
                 npc.row += 1; // Move NPC to the next row
+                npc.fallSpeed = 0;
             }
         }
     });
@@ -182,9 +186,9 @@ function drawScore() {
 function resetGame() {
     bricks = JSON.parse(JSON.stringify(initialBricksState));
     x = canvas.width / 2;
-    y = canvas.height - 30;
-    //dx = 4;
-    //dy = -4;
+    y = canvas.height - 40;
+    //dx = 3;
+    dy = -dy;
     paddleX = (canvas.width - paddleWidth) / 2;
     score = 0;
 }
