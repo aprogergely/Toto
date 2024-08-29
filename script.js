@@ -349,7 +349,7 @@ function draw() {
         dy = -dy;
     } else if (y + dy > canvas.height - ballRadius) {
         if (x > paddleX && x < paddleX + paddleWidth) {
-            adjustBallAngle(); // Adjust the ball's angle based on the paddle hit
+            handlePaddleCollision(); // Adjust the ball's angle based on the paddle hit
         } else {
             alert("GAME OVER");
             resetGame();
