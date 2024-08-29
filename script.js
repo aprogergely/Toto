@@ -81,14 +81,15 @@ function initBricks() {
     for(let c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
         for(let r = 0; r < brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 0 };  // Initialize as empty
+            bricks[c][r] = { x: 0, y: 0, status: 0, noBrick: false };  // Initialize as empty
         }
     }
 
     // Place bricks directly below each NPC
     npcs.forEach(npc => {
         if (npc.row + 1 < brickRowCount) {
-            bricks[npc.col][npc.row + 1] = { x: 0, y: 0, status: 3 };  // Strongest brick
+            bricks[npc.col][npc.row + 1] = { x: 0, y: 0, status: 3, noBrick: true };
+            bricks[npc.col][npc.row] = { x: 0, y: 0, status: 0, noBrick: true };  // Strongest brick
             initBrickCount++;
         }
     });
@@ -97,11 +98,11 @@ function initBricks() {
     for(let c = 0; c < brickColumnCount; c++) {
         for(let r = 0; r < brickRowCount; r++) {
             // Skip the positions already occupied by NPCs or directly below them
-            if (bricks[c][r].status === 0) {
+            if (bricks[c][r].noBrick === false) {
                 let isPresent = Math.random() > 0.3;  // 70% chance the brick is present
                 if (isPresent) {
                     let brickType = Math.floor(Math.random() * 3) + 1;
-                    bricks[c][r] = { x: 0, y: 0, status: brickType };
+                    bricks[c][r] = { x: 0, y: 0, status: brickType, noBrick: false };
                     initBrickCount++;
                 }
             }
