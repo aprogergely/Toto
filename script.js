@@ -42,6 +42,7 @@ const brickImage3 = new Image();
 brickImage3.src = 'images/brick_3.png';
 
 let bricks = [];
+let initBrickCount = 0;
 let npcs = [];
 let score = 0;
 
@@ -84,6 +85,7 @@ function initBricks() {
                 // Randomly assign a type to the brick (3, 2, or 1)
                 let brickType = Math.floor(Math.random() * 3) + 1;
                 bricks[c][r] = { x: 0, y: 0, status: brickType };
+                initBrickCount++
             } else {
                 bricks[c][r] = { x: 0, y: 0, status: 0 }; // No brick
             }
@@ -154,7 +156,7 @@ function moveNPCs() {
 function drawNPCs() {
     npcs.forEach(npc => {
         ctx.fillStyle = "#FF0000"; // Placeholder NPC color, replace with an image if needed
-        ctx.fillRect(npc.x, npc.y, brickWidth, brickHeight); // NPC size same as brick
+        ctx.fillRect(npc.x, npc.y, brickWidth/2, brickHeight); // NPC size same as brick
     });
 }
 
@@ -181,8 +183,8 @@ function resetGame() {
     bricks = JSON.parse(JSON.stringify(initialBricksState));
     x = canvas.width / 2;
     y = canvas.height - 30;
-    dx = 4;
-    dy = -4;
+    //dx = 4;
+    //dy = -4;
     paddleX = (canvas.width - paddleWidth) / 2;
     score = 0;
 }
@@ -206,10 +208,10 @@ function collisionDetection() {
                         b.status -= 1;
                     } else {
                         b.status = 0;
+                        score++;
                     }
-                    score++;
                     updateNPCs(); // Check if any NPCs need to fall
-                    if(score == brickRowCount * brickColumnCount) {
+                    if(score == initBrickCount) {
                         alert("YOU WIN, CONGRATS!");
                         document.location.reload();
                     }
