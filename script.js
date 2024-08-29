@@ -81,15 +81,15 @@ function initBricks() {
         bricks[c] = [];
         for(let r = 0; r < brickRowCount; r++) {
             // Check if the position has an NPC
-            let hasNPC = npcs.some(npc => npc.col === c && npc.row === r - 1);
+            let hasNPC = npcs.some(npc => npc.col === c && npc.row === r);
 
             // If the position has an NPC or is below an NPC, ensure a brick is present
-            if (hasNPC) {
+            if (npcs.some(npc => npc.col === c && npc.row === r - 1)) {
                 bricks[c][r] = { x: 0, y: 0, status: 3 };  // Ensure a brick with type 3 (strongest)
                 initBrickCount++;
             } else {
                 let isPresent = Math.random() > 0.3;  // 70% chance the brick is present
-                if (isPresent) {
+                if (isPresent && (hasNPC === False)) {
                     let brickType = Math.floor(Math.random() * 3) + 1;
                     bricks[c][r] = { x: 0, y: 0, status: brickType };
                     initBrickCount++;
