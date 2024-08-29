@@ -89,7 +89,7 @@ function initBricks() {
                 initBrickCount++;
             } else {
                 let isPresent = Math.random() > 0.3;  // 70% chance the brick is present
-                if (isPresent && (hasNPC === False)) {
+                if (isPresent && hasNPC === False) {
                     let brickType = Math.floor(Math.random() * 3) + 1;
                     bricks[c][r] = { x: 0, y: 0, status: brickType };
                     initBrickCount++;
