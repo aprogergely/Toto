@@ -168,7 +168,7 @@ function initNPCs() {
     let bossIndex = Math.floor(Math.random() * npcs.length); // Randomly pick one NPC to be the boss
     let boss = npcs[bossIndex];
     boss.isBoss = true;
-    boss.color = "blue"; // Blue color to distinguish the boss
+    //boss.color = "blue"; // Blue color to distinguish the boss
 }
 
 function moveBoss() {
@@ -191,7 +191,7 @@ function moveBoss() {
 
                 // Check if the target tile is empty and the tile above it is empty too
                 if (bricks[newCol][newRow].status === 0 && 
-                    (newRow - 1 < 0 || bricks[newCol][newRow - 1].status === 0)) {
+                    (bricks[newCol][newRow + 1].status > 0)) {
                     possibleMoves.push({ col: newCol, row: newRow, x: newX, y: newY });
                 }
             }
@@ -223,7 +223,12 @@ function moveNPCs() {
 
 function drawNPCs() {
     npcs.forEach(npc => {
-        ctx.fillStyle = npc.isBoss ? npc.color : "#FF0000"; // Boss is blue, others are red
+        if (npc.isBoss) {
+            ctx.fillStyle = "#FF0000";
+        } else {
+            ctx.fillStyle = "blue";
+        }
+        //ctx.fillStyle = npc.isBoss ? npc.color : "#FF0000"; // Boss is blue, others are red
         ctx.fillRect(npc.x, npc.y, brickWidth / 2, brickHeight); // NPC size
     });
 }
