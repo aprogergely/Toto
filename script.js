@@ -23,6 +23,7 @@ let paddleX = (canvas.width - paddleWidth) / 2;
 let rightPressed = false;
 let leftPressed = false;
 let initialBricksState;
+let initialNPCState;
 
 const brickRowCount = 6;
 const brickColumnCount = 8;
@@ -80,25 +81,28 @@ function initBricks() {
     for(let c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
         for(let r = 0; r < brickRowCount; r++) {
-            // Check if the position has an NPC
-            let hasNPC = npcs.some(npc => npc.col === c && npc.row === r);
+            bricks[c][r] = { x: 0, y: 0, status: 0 };  // Initialize as empty
+        }
+    }
 
-            // Place a brick below the NPC, but not on the NPC itself
-            if (hasNPC) {
-                bricks[c][r] = { x: 0, y: 0, status: 0 };  // No brick on the NPC tile
-                if (r + 1 < brickRowCount) {
-                    bricks[c][r + 1] = { x: 0, y: 0, status: 3 };  // Place a strong brick below the NPC
-                    initBrickCount++;
-                }
-            } else {
-                // Normal random brick placement
+    // Place bricks directly below each NPC
+    npcs.forEach(npc => {
+        if (npc.row + 1 < brickRowCount) {
+            bricks[npc.col][npc.row + 1] = { x: 0, y: 0, status: 3 };  // Strongest brick
+            initBrickCount++;
+        }
+    });
+
+    // Now place random bricks in other positions, without overwriting bricks below NPCs
+    for(let c = 0; c < brickColumnCount; c++) {
+        for(let r = 0; r < brickRowCount; r++) {
+            // Skip the positions already occupied by NPCs or directly below them
+            if (bricks[c][r].status === 0) {
                 let isPresent = Math.random() > 0.3;  // 70% chance the brick is present
                 if (isPresent) {
                     let brickType = Math.floor(Math.random() * 3) + 1;
                     bricks[c][r] = { x: 0, y: 0, status: brickType };
                     initBrickCount++;
-                } else {
-                    bricks[c][r] = { x: 0, y: 0, status: 0 };  // No brick
                 }
             }
         }
@@ -131,8 +135,9 @@ function drawBricks() {
 }
 
 // Capture the initial brick layout
-function saveInitialBricksState() {
+function saveInitialStates() {
     initialBricksState = JSON.parse(JSON.stringify(bricks));
+    initialNPCState = JSON.parse(JSON.stringify(npcs));
 }
 
 function initNPCs() {
@@ -205,6 +210,7 @@ function drawScore() {
 // Reset the game state using the saved brick layout
 function resetGame() {
     bricks = JSON.parse(JSON.stringify(initialBricksState));
+    npcs = JSON.parse(JSON.stringify(initialNPCState));
     x = canvas.width / 2;
     y = canvas.height - 40;
     //dx = 3;
@@ -304,5 +310,5 @@ function draw() {
 
 initNPCs();
 initBricks();
-saveInitialBricksState();
+saveInitialsStates();
 draw();
