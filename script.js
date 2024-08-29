@@ -42,6 +42,7 @@ const brickImage3 = new Image();
 brickImage3.src = 'images/brick_3.png';
 
 let bricks = [];
+let npcs = [];
 let score = 0;
 
 // Event Listeners for paddle movement
@@ -120,6 +121,54 @@ function saveInitialBricksState() {
     initialBricksState = JSON.parse(JSON.stringify(bricks));
 }
 
+function initNPCs() {
+    npcs = [];
+    for(let c = 0; c < brickColumnCount; c++) {
+        for(let r = 0; r < brickRowCount - 1; r++) { // Exclude the bottom row
+            if(bricks[c][r].status === 0 && bricks[c][r + 1].status > 0) {
+                // 30% chance to spawn an NPC
+                if (Math.random() > 0.7) {
+                    npcs.push({ x: c * (brickWidth + brickPadding) + brickOffsetLeft, 
+                                y: r * (brickHeight + brickPadding) + brickOffsetTop,
+                                direction: 1, 
+                                row: r, 
+                                col: c });
+                }
+            }
+        }
+    }
+}
+
+function moveNPCs() {
+    npcs.forEach(npc => {
+        npc.x += npc.direction * 2; // NPC speed
+        
+        // Change direction if NPC hits the edge of its brick area
+        if(npc.x <= npc.col * (brickWidth + brickPadding) + brickOffsetLeft || 
+           npc.x >= (npc.col + 1) * (brickWidth + brickPadding) - brickPadding + brickOffsetLeft) {
+            npc.direction *= -1;
+        }
+    });
+}
+
+function drawNPCs() {
+    npcs.forEach(npc => {
+        ctx.fillStyle = "#FF0000"; // Placeholder NPC color, replace with an image if needed
+        ctx.fillRect(npc.x, npc.y, brickWidth, brickHeight); // NPC size same as brick
+    });
+}
+
+function updateNPCs() {
+    npcs.forEach(npc => {
+        if(bricks[npc.col][npc.row + 1] && bricks[npc.col][npc.row + 1].status === 0) {
+            npc.y += 2; // NPC falling speed
+            if(npc.y >= (npc.row + 1) * (brickHeight + brickPadding) + brickOffsetTop) {
+                npc.row += 1; // Move NPC to the next row
+            }
+        }
+    });
+}
+
 // Draw Score
 function drawScore() {
     ctx.font = "16px Arial";
@@ -154,11 +203,12 @@ function collisionDetection() {
                 if(x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
                     dy = -dy;
                     if(b.status > 1) {
-                        b.status -= 1; // Move to the next lower brick type
+                        b.status -= 1;
                     } else {
-                        b.status = 0; // Brick disappears
+                        b.status = 0;
                     }
                     score++;
+                    updateNPCs(); // Check if any NPCs need to fall
                     if(score == brickRowCount * brickColumnCount) {
                         alert("YOU WIN, CONGRATS!");
                         document.location.reload();
@@ -169,16 +219,18 @@ function collisionDetection() {
     }
 }
 
+
 // Game Loop
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBricks();
     drawBall();
     drawPaddle();
+    drawNPCs(); // Draw NPCs
     drawScore();
     collisionDetection();
+    moveNPCs(); // Move NPCs
 
-    // Ball Movement
     if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
         dx = -dx;
     }
@@ -188,11 +240,11 @@ function draw() {
         if(x > paddleX && x < paddleX + paddleWidth) {
             dy = -dy;
         } else {
-            gameOver()
+            alert("GAME OVER");
+            resetGame();
         }
     }
 
-    // Paddle Movement
     if(rightPressed && paddleX < canvas.width - paddleWidth) {
         paddleX += 7;
     } else if(leftPressed && paddleX > 0) {
@@ -204,6 +256,8 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
+
 initBricks();
+initNPCs();
 saveInitialBricksState();
 draw();
