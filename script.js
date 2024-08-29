@@ -47,6 +47,9 @@ let initBrickCount = 0;
 let npcs = [];
 let score = 0;
 
+let bossIndex;
+let boss;
+
 // Event Listeners for paddle movement
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
@@ -165,8 +168,8 @@ function initNPCs() {
         }
     }
 
-    let bossIndex = Math.floor(Math.random() * npcs.length); // Randomly pick one NPC to be the boss
-    let boss = npcs[bossIndex];
+    bossIndex = Math.floor(Math.random() * npcs.length); // Randomly pick one NPC to be the boss
+    boss = npcs[bossIndex];
     boss.isBoss = true;
     //boss.color = "blue"; // Blue color to distinguish the boss
 }
