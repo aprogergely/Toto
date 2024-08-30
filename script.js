@@ -244,15 +244,18 @@ function drawNPCs() {
 
 function updateNPCs() {
     npcs.forEach(npc => {
-        if(bricks[npc.col][npc.row + 1] && bricks[npc.col][npc.row + 1].status === 0) {
-            npc.direction = 0;
-            npc.fallSpeed = 2; // NPC falling speed
-            if(npc.y >= (npc.row + 1) * (brickHeight + brickPadding) + brickOffsetTop) {
-                npc.row += 1; // Move NPC to the next row
-                npc.fallSpeed = 0;
+        if(bricks[npc.col][npc.row + 1]){
+            if (bricks[npc.col][npc.row + 1].status === 0) {
+                npc.direction = 0;
+                npc.fallSpeed = 2; // NPC falling speed
+                if(npc.y >= (npc.row + 1) * (brickHeight + brickPadding) + brickOffsetTop) {
+                    npc.row += 1; // Move NPC to the next row
+                    npc.fallSpeed = 0;
+                }
             }
         } else {
             npc.fallSpeed = 4;
+            score++
         }
     });
 }
@@ -295,10 +298,10 @@ function collisionDetection() {
                         b.status -= 1;
                     } else {
                         b.status = 0;
-                        score++;
+                        //score++;
                     }
                     updateNPCs(); // Check if any NPCs need to fall
-                    if(score == initBrickCount) {
+                    if(score == npcs.length-1) {
                         alert("YOU WIN, CONGRATS!");
                         document.location.reload();
                     }
