@@ -163,6 +163,7 @@ function initNPCs() {
                 y: row * (brickHeight + brickPadding) + brickOffsetTop,
                 direction: 1,
                 fallSpeed: 0,
+                hasFallen: false,
                 row: row,
                 col: col
             });
@@ -255,7 +256,10 @@ function updateNPCs() {
             }
         } else {
             npc.fallSpeed = 4;
-            score++
+            if (npc.hasFallen === false) {
+                score++
+            }
+            npc.hasFallen = true;
         }
     });
 }
