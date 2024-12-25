@@ -22,7 +22,15 @@ class CardGame:
     def next_turn(self):
         player = self.players[self.current_player_index]
         opponent = self.players[1 - self.current_player_index]
-        print(f"Player {self.current_player_index + 1}'s turn")
+        print(f"\nPlayer {self.current_player_index + 1}'s turn")
+
+        # Display board state and hands
+        print("\n--- Board State ---")
+        print(f"Player 1 Frontline: {self.players[0].frontline.name}, Backline: {[card.name for card in self.players[0].backline]}")
+        print(f"Player 2 Frontline: {self.players[1].frontline.name}, Backline: {[card.name for card in self.players[1].backline]}")
+        print("\n--- Hands ---")
+        print(f"Player 1 Hand: {[card.name for card in self.players[0].hand]}")
+        print(f"Player 2 Hand: {[card.name for card in self.players[1].hand]}")
 
         # Draw a card
         player.draw_card()
@@ -30,16 +38,20 @@ class CardGame:
         # Play a spell card (if available and chosen)
         spell = player.choose_spell_card()
         if spell:
+            print(f"Player {self.current_player_index + 1} plays spell: {spell.effect}")
             spell.use(player, opponent)
+            player.play_spell_card(spell)
         
         # Play a super monster card (if possible and chosen)
         super_monster = player.choose_super_monster_card()
         if super_monster:
+            print(f"Player {self.current_player_index + 1} summons super monster: {super_monster.color} ({super_monster.name})")
             player.play_super_monster(super_monster)
         
         # Play a base monster card (if space on board and chosen)
         base_monster = player.choose_base_monster_card()
         if base_monster:
+            print(f"Player {self.current_player_index + 1} plays base monster: {base_monster.color} ({base_monster.name})")
             player.play_base_monster(base_monster)
         
         # Attach mana
@@ -47,6 +59,7 @@ class CardGame:
         
         # Attack with frontline monster
         if player.frontline:
+            print(f"Player {self.current_player_index + 1}'s frontline monster attacks!")
             player.attack_with_frontline(opponent)
 
         # Check for game over
@@ -65,6 +78,7 @@ class Player:
         self.frontline = None
         self.backline = []
         self.mana_pool = {"red": 0, "green": 0, "blue": 0}
+        self.available_colors = self.deck.available_colors  # Use precomputed available colors
 
     def generate_initial_hand(self):
         for _ in range(5):
@@ -74,6 +88,7 @@ class Player:
         card = self.deck.draw()
         if card:
             self.hand.append(card)
+            print(f"Drew card: {card.name}")
 
     def choose_spell_card(self):
         spells = [card for card in self.hand if isinstance(card, SpellCard)]
@@ -81,10 +96,14 @@ class Player:
             return spells[0]  # Placeholder for player choice
         return None
 
+    def play_spell_card(self, spell):
+        self.hand.remove(spell)
+
     def choose_super_monster_card(self):
         super_monsters = [card for card in self.hand if isinstance(card, SuperMonsterCard)]
         for card in super_monsters:
-            if card.sacrifice in self.backline:
+            # Check if a card in the backline matches the sacrifice name
+            if any(backline_card.name == card.sacrifice for backline_card in self.backline):
                 return card  # Placeholder for player choice
         return None
 
@@ -97,7 +116,7 @@ class Player:
             self.backline.append(super_monster)
 
     def choose_base_monster_card(self):
-        base_monsters = [card for card in self.hand if isinstance(card, BaseMonsterCard)]
+        base_monsters = [card for card in self.hand if isinstance(card, BaseMonsterCard) and not isinstance(card, SuperMonsterCard)]
         if base_monsters and len(self.backline) < 3:
             return base_monsters[0]  # Placeholder for player choice
         return None
@@ -111,7 +130,10 @@ class Player:
             self.backline.append(base_monster)
 
     def attach_mana(self):
-        mana_color = random.choice([color for color in ["red", "green", "blue"] if self.deck.has_monsters_of_color(color)])
+        if not self.available_colors:
+            print("No colors available for mana generation!")
+            return
+        mana_color = random.choice(list(self.available_colors))
         self.mana_pool[mana_color] += 1
         print(f"Generated 1 {mana_color} mana")
 
@@ -137,25 +159,57 @@ class Player:
 class Deck:
     def __init__(self):
         self.cards = self.generate_deck()
+        self.available_colors = self.calculate_available_colors()
 
     def generate_deck(self):
-        # Generate 30 cards including monsters and spells
+        # Card data
+        card_data = {
+            "Goblin": {"Color": "green", "Health": 50, "Attack": 20, "Attack_Cost": 1, "Sacrifice": None},
+            "Goblin King": {"Color": "green", "Health": 100, "Attack": 50, "Attack_Cost": 3, "Sacrifice": "Goblin"},
+            "Dryad": {"Color": "green", "Health": 80, "Attack": 20, "Attack_Cost": 2, "Sacrifice": None},
+            "Unicorn": {"Color": "green", "Health": 60, "Attack": 30, "Attack_Cost": 2, "Sacrifice": None},
+            "Mermaid": {"Color": "blue", "Health": 60, "Attack": 20, "Attack_Cost": 2, "Sacrifice": None},
+            "Neptune": {"Color": "blue", "Health": 80, "Attack": 50, "Attack_Cost": 2, "Sacrifice": "Mermaid"},
+            "Shark": {"Color": "blue", "Health": 50, "Attack": 40, "Attack_Cost": 2, "Sacrifice": None},
+            "Lizard": {"Color": "red", "Health": 40, "Attack": 20, "Attack_Cost": 2, "Sacrifice": None},
+            "Dragon": {"Color": "red", "Health": 70, "Attack": 60, "Attack_Cost": 2, "Sacrifice": "Lizard"},
+            "Lizardman": {"Color": "red", "Health": 80, "Attack": 40, "Attack_Cost": 1, "Sacrifice": "Lizard"},
+            "Phoenix": {"Color": "red", "Health": 100, "Attack": 20, "Attack_Cost": 2, "Sacrifice": None}
+        }
+
+        spell_data = {
+        "Draw": {"Effect": "draw"},
+        "Boost": {"Effect": "boost"},
+        "Weaken": {"Effect": "weaken"},
+        "Heal": {"Effect": "heal"},
+        "Switch": {"Effect": "switch"}
+        }
+
+        # Generate the deck
         cards = []
-        for _ in range(20):
-            color = random.choice(["red", "green", "blue"])
-            cards.append(BaseMonsterCard(color, random.randint(50, 100), random.randint(10, 50), random.randint(1, 5)))
-        for _ in range(5):
-            cards.append(SuperMonsterCard(random.choice(["red", "green", "blue"]), random.randint(60, 100), random.randint(20, 50), random.randint(2, 5), random.choice(["BaseMonster"])))
-        for _ in range(5):
-            cards.append(SpellCard(random.choice(["draw", "boost", "weaken", "heal", "switch"])))
+        for _ in range(20):  # Add 20 monster cards at random
+            name, stats = random.choice(list(card_data.items()))
+            if stats["Sacrifice"]:
+                cards.append(SuperMonsterCard(name, stats["Color"], stats["Health"], stats["Attack"], stats["Attack_Cost"], stats["Sacrifice"]))
+            else:
+                cards.append(BaseMonsterCard(name, stats["Color"], stats["Health"], stats["Attack"], stats["Attack_Cost"]))
+
+        # Generate spell cards
+        for _ in range(5):  # Add 5 spell cards at random
+            name, stats = random.choice(list(spell_data.items()))
+            cards.append(SpellCard(stats["Effect"], name))
+
         random.shuffle(cards)
         return cards
+
+    def calculate_available_colors(self):
+        return {card.color.lower() for card in self.cards if isinstance(card, (BaseMonsterCard, SuperMonsterCard))}
 
     def draw(self):
         return self.cards.pop() if self.cards else None
 
     def has_monsters_of_color(self, color):
-        return any(isinstance(card, BaseMonsterCard) and card.color == color for card in self.cards)
+        return any(isinstance(card, BaseMonsterCard) and card.color.lower() == color.lower() for card in self.cards)
 
     def get_random_base_monster(self):
         base_monsters = [card for card in self.cards if isinstance(card, BaseMonsterCard)]
@@ -166,37 +220,41 @@ class Deck:
         return None
 
 class BaseMonsterCard:
-    def __init__(self, color, health, attack, attack_cost):
+    def __init__(self, name, color, health, attack, attack_cost):
+        self.name = name
         self.color = color
         self.health = health
         self.attack = attack
         self.attack_cost = attack_cost
 
 class SuperMonsterCard(BaseMonsterCard):
-    def __init__(self, color, health, attack, attack_cost, sacrifice):
-        super().__init__(color, health, attack, attack_cost)
+    def __init__(self, name, color, health, attack, attack_cost, sacrifice):
+        super().__init__(name, color, health, attack, attack_cost)
         self.sacrifice = sacrifice
 
 class SpellCard:
-    def __init__(self, effect):
+    def __init__(self, effect,name):
         self.effect = effect
+        self.name = name
 
     def use(self, player, opponent):
+        print(f"Spell effect: {self.effect}")
         if self.effect == "draw":
             player.draw_card()
-        elif self.effect == "boost":
-            if player.frontline:
-                player.frontline.attack += 10
-        elif self.effect == "weaken":
-            if opponent.frontline:
-                opponent.frontline.attack -= 10
-        elif self.effect == "heal":
-            if player.frontline:
-                player.frontline.health += 20
-        elif self.effect == "switch":
-            if opponent.backline:
-                opponent.frontline, opponent.backline[random.randint(0, len(opponent.backline) - 1)] = \
-                    opponent.backline[random.randint(0, len(opponent.backline) - 1)], opponent.frontline
+        elif self.effect == "boost" and player.frontline:
+            player.frontline.attack += 10
+            print(f"{player.frontline.name} attack increased by 10!")
+        elif self.effect == "weaken" and opponent.frontline:
+            opponent.frontline.attack -= 10
+            print(f"{opponent.frontline.name} attack reduced by 10!")
+        elif self.effect == "heal" and player.frontline:
+            player.frontline.health += 20
+            print(f"{player.frontline.name} healed by 20!")
+        elif self.effect == "switch" and opponent.backline:
+            idx = random.randint(0, len(opponent.backline) - 1)
+            opponent.frontline, opponent.backline[idx] = opponent.backline[idx], opponent.frontline
+            print("Opponent's frontline and backline switched!")
+
 
 
 def type_effectiveness(attacker_color, defender_color):
