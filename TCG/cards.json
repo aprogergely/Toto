@@ -1,0 +1,13 @@
+{
+    "Goblin": {"Color": "Green", "Health": 50, "Attack": 20, "Attack_Cost": 1, "Sacrifice": null},
+    "Goblin King": {"Color": "Green", "Health": 100, "Attack": 50, "Attack_Cost": 3, "Sacrifice": "Goblin"},
+    "Dryad": {"Color": "Green", "Health": 80, "Attack": 20, "Attack_Cost": 2, "Sacrifice": null},
+    "Unicorn": {"Color": "Green", "Health": 60, "Attack": 30, "Attack_Cost": 2, "Sacrifice": null},
+    "Mermaid": {"Color": "Blue", "Health": 60, "Attack": 20, "Attack_Cost": 2, "Sacrifice": null},
+    "Neptune": {"Color": "Blue", "Health": 80, "Attack": 50, "Attack_Cost": 2, "Sacrifice": "Mermaid"},
+    "Shark": {"Color": "Blue", "Health": 50, "Attack": 40, "Attack_Cost": 2, "Sacrifice": null},
+    "Lizard": {"Color": "Red", "Health": 40, "Attack": 20, "Attack_Cost": 2, "Sacrifice": null},
+    "Dragon": {"Color": "Red", "Health": 70, "Attack": 60, "Attack_Cost": 2, "Sacrifice": "Lizard"},
+    "Lizardman": {"Color": "Red", "Health": 80, "Attack": 40, "Attack_Cost": 1, "Sacrifice": "Lizard"},
+    "Phoenix": {"Color": "Red", "Health": 100, "Attack": 20, "Attack_Cost": 2, "Sacrifice": null}
+}
