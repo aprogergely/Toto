@@ -51,36 +51,77 @@ class CardGame:
         print("\n--- Hands ---")
         print(f"Player 1 Hand: {[card.name for card in self.players[0].hand]}")
         print(f"Player 2 Hand: {[card.name for card in self.players[1].hand]}")
-        
+
         # during player's turn
         if not player.is_ai:
-            # Play a spell card (if available and chosen)
-            self.prompt_for_card_play(player, "spell")
+            has_turn_ended = False
+            while has_turn_ended == False:
+                print("\n--- Options: ---\n")
+                phase_selection_options = [None, None, None, None, None, None, None, None, None]
+                if player.cards_in_hand("spell") and player.can_play_support:
+                    phase_selection_options[1] = "Use a spell card."
+                if player.cards_in_hand("base_monster") and len(player.backline) < 3 and player.can_play_base_monster:
+                    phase_selection_options[2] = "Play a base monster."
+                if player.cards_in_hand("super_monster") and player.can_play_super_monster:
+                    phase_selection_options[3] = "Play a super monster."
+                if player.can_retreat and len(player.backline) > 0:
+                    phase_selection_options[4] = "Retreat frontline monster."
+                if any(card.can_use_skill for card in player.backline): # NEW!
+                    phase_selection_options[5] = "Use a monster skill."
+                if player.can_attach_mana:
+                    phase_selection_options[6] = "Attach mana."
+                if player.frontline.can_attack:
+                    phase_selection_options[7] = "Attack with frontline monster."
+                phase_selection_options[8] = "End turn"
 
-            # Retreat
-            if len(player.backline) > 0:
-                retreat = input("Would you like to retreat your frontline monster? (y/n): ").strip().lower() == 'y'
-                if retreat:
-                    player.retreat_frontline()
+                choice = 0
+                print(phase_selection_options)
+                for i, option_text in enumerate(phase_selection_options):
+                    if option_text:
+                        print(f"{i}: {option_text}")
+                while phase_selection_options[choice] == None:
+                    choice = self.choose_option(7)
+                    print(f"picked option {choice}")
+                    if phase_selection_options[choice] == None:
+                        print(f"Invalid choice, please choose something else!")
 
-            # Play a super monster card (if possible and chosen)
-            self.prompt_for_card_play(player, "super_monster")
+                if choice == 1:
+                    # Play a spell card (if available and chosen)
+                    self.prompt_for_card_play(player, "spell")
 
-            # Play a base monster card (if space on board and chosen)
-            self.prompt_for_card_play(player, "base_monster")
+                if choice == 4:
+                    # Retreat
+                    if len(player.backline) > 0:
+                        retreat = input("Would you like to retreat your frontline monster? (y/n): ").strip().lower() == 'y'
+                        if retreat:
+                            player.retreat_frontline()
 
-            # Attach mana
-            mana_color = random.choice(list(player.available_colors))
-            print(f"generated 1 {mana_color} mana!")
-            attach = input("Would you like to attach mana? (y/n): ").strip().lower() == 'y'
-            if attach:
-                player.attach_mana_to_frontline(mana_color)
+                if choice == 3:
+                    # Play a super monster card (if possible and chosen)
+                    self.prompt_for_card_play(player, "super_monster")
 
-            # Attack with frontline monster
-            attack = input("Would you like to attack with your frontline monster? (y/n): ").strip().lower() == 'y'
-            if attack:
-                print(f"Player {self.current_player_index + 1}'s frontline monster attacks!")
-                player.attack_with_frontline(opponent)
+                if choice == 2:
+                    # Play a base monster card (if space on board and chosen)
+                    self.prompt_for_card_play(player, "base_monster")
+
+                if choice == 6:
+                    # Attach mana
+                    mana_color = random.choice(list(player.available_colors))
+                    print(f"generated 1 {mana_color} mana!")
+                    attach = input("Would you like to attach mana? (y/n): ").strip().lower() == 'y'
+                    if attach:
+                        player.attach_mana_to_frontline(mana_color)
+
+                if choice == 7:
+                    # Attack with frontline monster
+                    attack = input("Would you like to attack with your frontline monster? (y/n): ").strip().lower() == 'y'
+                    if attack:
+                        print(f"Player {self.current_player_index + 1}'s frontline monster tries to attack!")
+                        player.attack_with_frontline(opponent)
+                        has_turn_ended = True
+
+                if choice == 8:
+                    has_turn_ended = True
 
         else:
             # Play a spell card (if available and chosen)
@@ -110,7 +151,7 @@ class CardGame:
 
             # Attack with frontline monster
             print(f"Player {self.current_player_index + 1}'s frontline monster attacks!")
-            player.attack_with_frontline(opponent)                
+            player.attack_with_frontline(opponent)
 
         # inbetween turns
         # Check for game over
@@ -129,7 +170,7 @@ class CardGame:
         self.current_player_index = 1 - self.current_player_index
         self.current_turn += 1
         return True
-    
+
     def prompt_for_card_play(self, player, card_type):
         if card_type == "spell":
             spells = [card for card in player.hand if isinstance(card, SpellCard)]
@@ -173,6 +214,15 @@ class CardGame:
             except ValueError:
                 print("Invalid input. Please enter a number.")
 
+    def choose_option(self, num_choices):
+        while True:
+            try:
+                choice = int(input(f"Choose a number (1-{num_choices}: "))
+                if -1 < choice < num_choices:
+                    return choice
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
 class Player:
     def __init__(self, is_ai):
         self.deck = Deck()
@@ -183,9 +233,9 @@ class Player:
         self.score = 0
         self.is_ai = is_ai
 
-        self.can_retreat = True #NEW!
+        self.can_retreat = True
         self.can_play_support = True #NEW!
-        self.can_attach_mana = True #NEW!
+        self.can_attach_mana = True
         self.can_play_base_monster = True #NEW!
         self.can_play_super_monster = True #NEW!
         self.can_play_item = True #NEW!
@@ -200,6 +250,23 @@ class Player:
             self.hand.append(card)
             print(f"Drew card: {card.name}")
 
+    def cards_in_hand(self, card_type):
+        if card_type == "spell":
+            spells = [card for card in self.hand if isinstance(card, SpellCard)]
+            if spells:
+                return spells
+        elif card_type == "base_monster":
+            base_monsters = [card for card in self.hand if isinstance(card, BaseMonsterCard)]
+            if base_monsters:
+                return base_monsters
+        elif card_type == "super_monster":
+            super_monsters = [card for card in self.hand if isinstance(card, SuperMonsterCard)]
+            if super_monsters:
+                return super_monsters
+        elif card_type == "any":
+            return self.hand
+        return None
+
     def choose_spell_card(self):
         spells = [card for card in self.hand if isinstance(card, SpellCard)]
         if spells:
@@ -208,6 +275,7 @@ class Player:
 
     def play_spell_card(self, spell):
         self.hand.remove(spell)
+        self.can_play_support = False
 
     def choose_super_monster_card(self):
         super_monsters = [card for card in self.hand if isinstance(card, SuperMonsterCard)]
@@ -255,7 +323,7 @@ class Player:
             self.frontline = super_monster
         else:
             self.backline.append(super_monster)
-        
+
         # Inherit mana from the sacrificed monster
         super_monster.mana_attached = current_mana
         super_monster.damage_taken = damage_taken
@@ -280,6 +348,7 @@ class Player:
             input("An invalid mana type was generated!")
             return
         self.frontline.mana_attached[mana_color] += 1
+        self.can_attach_mana = False
         print(f"Attached 1 {mana_color} mana to {self.frontline.name}")
 
     def retreat_frontline(self):
@@ -330,13 +399,13 @@ class Player:
         self.frontline.reset_bonuses()
         for card in self.backline:
             card.reset_bonuses()
-        
-        self.can_retreat = True #NEW!
-        self.can_play_support = True #NEW!
-        self.can_attach_mana = True #NEW!
-        self.can_play_base_monster = True #NEW!
-        self.can_play_super_monster = True #NEW!
-        self.can_play_item = True #NEW!
+
+        self.can_retreat = True
+        self.can_play_support = True
+        self.can_attach_mana = True
+        self.can_play_base_monster = True
+        self.can_play_super_monster = True
+        self.can_play_item = True
 
     def promote_backline(self):
         if self.backline:
@@ -420,7 +489,7 @@ class MonsterCard:
         self.attack_bonus = 0
         self.defense_bonus = 0 #NEW!
         self.health_bonus = 0 #NEW!
-        self.damage_taken = 0 #NEW!
+        self.damage_taken = 0
         self.mana_bonus = 0 #NEW!
         self.retreat_bonus = 0 #NEW!
         self.score_bonus = 0 #NEW!
@@ -461,20 +530,18 @@ class MonsterCard:
 
     def reset_bonuses(self):
         self.attack_bonus = 0
-        self.defense_bonus = 0 #NEW!
-        #self.health_bonus = 0 #NEW!
-        #self.damage_taken = 0 #NEW!
-        self.mana_bonus = 0 #NEW!
-        self.retreat_bonus = 0 #NEW!
-        self.score_bonus = 0 #NEW!
+        self.defense_bonus = 0
+        self.mana_bonus = 0
+        self.retreat_bonus = 0
+        self.score_bonus = 0
 
-        self.can_attack = True #NEW!
-        self.can_retreat = True #NEW!
-        self.can_be_sacrificed = True #NEW!
-        self.can_use_skill = True #NEW!
-        self.can_be_hit = True #NEW!
+        self.can_attack = True
+        self.can_retreat = True
+        self.can_be_sacrificed = True
+        self.can_use_skill = True
+        self.can_be_hit = True
 
-        self.status = 0 #NEW!
+        self.status = 0
 
 class BaseMonsterCard(MonsterCard):
     def __init__(self, name, color, health, attack, attack_cost, retreat_cost):
