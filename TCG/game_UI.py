@@ -1,23 +1,156 @@
+import tkinter as tk
+from tkinter import ttk
 import random
 
+class CardGameUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Card Game")
+        self.Cardgame = CardGame()
+
+        # Main layout
+        self.create_layout()
+
+    def create_layout(self):
+        # Top Frame: Opponent's area
+        opponent_frame = tk.Frame(self.root, bd=2, relief="ridge")
+        opponent_frame.pack(side="top", fill="x")
+
+        tk.Label(opponent_frame, text="Opponent").pack(side="left")
+        self.opponent_deck_label = tk.Label(opponent_frame, text="Deck: 30")
+        self.opponent_deck_label.pack(side="right")
+        self.create_opponent_card_area(opponent_frame, "Opponent Backline", 3)
+        self.create_opponent_card_area(opponent_frame, "Opponent Frontline", 1)
+
+        # Center Frame: Game Info
+        center_frame = tk.Frame(self.root, bd=2, relief="ridge")
+        center_frame.pack(fill="x")
+        self.score_label = tk.Label(center_frame, text="Score: Player 0 - 0 Opponent")
+        self.score_label.pack(side="left")
+        self.end_turn_label = tk.Button(center_frame, text="End Turn", command=lambda: self.pass_turn())
+        self.end_turn_label.pack(side="right")
+
+        # Bottom Frame: Player's area
+        player_frame = tk.Frame(self.root, bd=2, relief="ridge")
+        player_frame.pack(side="top", fill="x")
+
+        tk.Label(player_frame, text="Player").pack(side="left")
+        self.player_deck_label = tk.Label(player_frame, text="Deck: 30")
+        self.player_deck_label.pack(side="right")
+        self.create_frontline_area(player_frame, "Player Frontline")
+        self.create_backline_area(player_frame, "Player Backline")
+
+        # Hand Area with Scrollbar
+        hand_frame = tk.Frame(self.root, bd=2, relief="ridge")
+        hand_frame.pack(side="bottom", fill="x")
+        tk.Label(hand_frame, text="Hand").pack(anchor="w")
+        self.create_hand_area(hand_frame)
+
+        # Card Details Display
+        self.details_label = tk.Label(self.root, text="Hover over a card to see details", bd=2, relief="ridge")
+        self.details_label.pack(fill="x")
+
+    def create_opponent_card_area(self, parent, label_text, num_slots):
+        frame = tk.Frame(parent, bd=1, relief="sunken")
+        frame.pack(side="top", fill="x", pady=5)
+        tk.Label(frame, text=label_text).pack(anchor="w")
+        for _ in range(num_slots):
+            card = tk.Label(frame, text="Empty", width=10, height=5, bg="white", relief="ridge")
+            card.pack(side="left", padx=2)
+            card.bind("<Enter>", self.show_card_details)
+            card.bind("<Leave>", self.clear_card_details)
+
+    def create_frontline_area(self, parent, label_text):
+        frame = tk.Frame(parent, bd=1, relief="sunken")
+        frame.pack(side="top", fill="x", pady=5)
+        tk.Label(frame, text=label_text).pack(anchor="w")
+        card = tk.Button(frame, text=f"Frontline Card", width=10, height=5, bg="white", relief="ridge", command=lambda: self.play_card_from_frontline())
+        card.pack(side="left", padx=2)
+        card.bind("<Enter>", self.show_card_details)
+        card.bind("<Leave>", self.clear_card_details)
+
+    def create_backline_area(self, parent, label_text):
+        frame = tk.Frame(parent, bd=1, relief="sunken")
+        frame.pack(side="top", fill="x", pady=5)
+        tk.Label(frame, text=label_text).pack(anchor="w")
+        for i in range(3):
+            card = tk.Button(frame, text=f"Card {i+1}", width=10, height=5, bg="white", relief="ridge", command=lambda c=i: self.play_card_from_backline(c))
+            card.pack(side="left", padx=2)
+            card.bind("<Enter>", self.show_card_details)
+            card.bind("<Leave>", self.clear_card_details)
+
+    def create_hand_area(self, parent):
+        canvas = tk.Canvas(parent, height=100)
+        scrollbar = ttk.Scrollbar(parent, orient="horizontal", command=canvas.xview)
+        scroll_frame = tk.Frame(canvas)
+
+        scroll_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+        canvas.configure(xscrollcommand=scrollbar.set)
+
+        canvas.pack(side="top", fill="x", expand=True)
+        scrollbar.pack(side="bottom", fill="x")
+
+        for i in range(10):  # Example: Add 10 card placeholders
+            card = tk.Button(scroll_frame, text=f"Card {i+1}", width=10, height=5, bg="lightgray", relief="ridge", command=lambda c=i: self.play_card_from_hand(c)) ####### NEW!
+            card.pack(side="left", padx=5)
+            card.bind("<Enter>", self.show_card_details)
+            card.bind("<Leave>", self.clear_card_details)
+
+    def show_card_details(self, event):
+        # Show detailed stats of the card
+        self.details_label.config(text=f"Details: {event.widget.cget('text')}")
+
+    def clear_card_details(self, event):
+        # Clear the details when the mouse leaves the card
+        self.details_label.config(text="Hover over a card to see details")
+
+    def play_card_from_hand(self, card_index):
+        print(f"Card {card_index+1} selected! Show options.")
+        # Implement action logic here
+        self.Cardgame.play_card_from_hand(card_name) ####### NEW!
+        self.refresh_board_state() ####### NEW!
+
+    def play_card_from_frontline(self):
+        print(f"Frontline selected! Show options.")
+        options = ["attach mana", "attack", "retreat", "cancel"]
+        options.show
+        case selected_option:
+            0:
+                self.Cardgame.attach_mana(card_name)
+                self.refresh_board_state()
+            1:
+                self.Cardgame.attack()
+                self.refresh_board_state()
+            2:
+                self.Cardgame.retreat()
+                self.refresh_board_state()
+        return
+
+    def play_card_from_backline(self, card_index):
+        print(f"Card {card_index+1} selected! Show options.")
+        options = ["attach mana", "cancel"]
+        options.show
+        if selected_option == 0:
+            self.Cardgame.attach_mana(card_name)
+            self.refresh_board_state()
+        return
+
+    def pass_turn(self):
+        print(f"Next player's turn.")
+        self.Cardgame.AI_turn()
+        self.refresh_board_state()
+
+    
 class CardGame:
     def __init__(self):
-        num_human_players = self.get_num_human_players()
-        self.players = [Player(is_ai=(i >= num_human_players)) for i in range(2)]
+        self.players = [Player(is_ai=True), Player(is_ai=False)]
         self.current_player_index = 0
         self.current_turn = 1
         self.setup_game()
-
-    def get_num_human_players(self):
-        while True:
-            try:
-                num = int(input("Enter the number of human players (0, 1, or 2): "))
-                if num in (0, 1, 2):
-                    return num
-                else:
-                    print("Please enter a valid number (0, 1, or 2).")
-            except ValueError:
-                print("Invalid input. Please enter a number.")
 
     def setup_game(self):
         # Both players draw initial hand of 5 cards
@@ -32,7 +165,7 @@ class CardGame:
             else:
                 print("Player does not have a base monster to place in frontline!")
 
-    def next_turn(self):
+    def AI_turn(self):
         player = self.players[self.current_player_index]
         opponent = self.players[1 - self.current_player_index]
         print(f"\nTurn {self.current_turn}!")
@@ -52,106 +185,34 @@ class CardGame:
         print(f"Player 1 Hand: {[card.name for card in self.players[0].hand]}")
         print(f"Player 2 Hand: {[card.name for card in self.players[1].hand]}")
 
-        # during player's turn
-        if not player.is_ai:
-            has_turn_ended = False
-            while has_turn_ended == False:
-                print("\n--- Options: ---\n")
-                phase_selection_options = [None, None, None, None, None, None, None, None, None]
-                if player.cards_in_hand("spell") and player.can_play_support:
-                    phase_selection_options[1] = "Use a spell card."
-                if player.cards_in_hand("base_monster") and len(player.backline) < 3 and player.can_play_base_monster:
-                    phase_selection_options[2] = "Play a base monster."
-                if player.cards_in_hand("super_monster") and player.can_play_super_monster:
-                    phase_selection_options[3] = "Play a super monster."
-                if player.can_retreat and len(player.backline) > 0:
-                    phase_selection_options[4] = "Retreat frontline monster."
-                if any(card.can_use_skill for card in player.backline): # NEW!
-                    phase_selection_options[5] = "Use a monster skill."
-                if player.can_attach_mana:
-                    phase_selection_options[6] = "Attach mana."
-                if player.frontline.can_attack:
-                    phase_selection_options[7] = "Attack with frontline monster."
-                phase_selection_options[8] = "End turn"
+        # Play a spell card (if available and chosen)
+        spell = player.choose_spell_card()
+        if spell:
+            print(f"Player {self.current_player_index + 1} plays spell: {spell.effect}")
+            spell.use(player, opponent)
+            player.play_spell_card(spell)
 
-                choice = 0
-                print(phase_selection_options)
-                for i, option_text in enumerate(phase_selection_options):
-                    if option_text:
-                        print(f"{i}: {option_text}")
-                while phase_selection_options[choice] == None:
-                    choice = self.choose_option(8)
-                    print(f"picked option {choice}")
-                    if phase_selection_options[choice] == None:
-                        print(f"Invalid choice, please choose something else!")
-
-                if choice == 1:
-                    # Play a spell card (if available and chosen)
-                    self.prompt_for_card_play(player, "spell")
-
-                if choice == 4:
-                    # Retreat
-                    if len(player.backline) > 0:
-                        retreat = input("Would you like to retreat your frontline monster? (y/n): ").strip().lower() == 'y'
-                        if retreat:
-                            player.retreat_frontline()
-
-                if choice == 3:
-                    # Play a super monster card (if possible and chosen)
-                    self.prompt_for_card_play(player, "super_monster")
-
-                if choice == 2:
-                    # Play a base monster card (if space on board and chosen)
-                    self.prompt_for_card_play(player, "base_monster")
-
-                if choice == 6:
-                    # Attach mana
-                    mana_color = random.choice(list(player.available_colors))
-                    print(f"generated 1 {mana_color} mana!")
-                    attach = input("Would you like to attach mana? (y/n): ").strip().lower() == 'y'
-                    if attach:
-                        player.attach_mana_to_frontline(mana_color)
-
-                if choice == 7:
-                    # Attack with frontline monster
-                    attack = input("Would you like to attack with your frontline monster? (y/n): ").strip().lower() == 'y'
-                    if attack:
-                        print(f"Player {self.current_player_index + 1}'s frontline monster tries to attack!")
-                        player.attack_with_frontline(opponent)
-                        has_turn_ended = True
-
-                if choice == 8:
-                    has_turn_ended = True
-
-        else:
-            # Play a spell card (if available and chosen)
-            spell = player.choose_spell_card()
-            if spell:
-                print(f"Player {self.current_player_index + 1} plays spell: {spell.effect}")
-                spell.use(player, opponent)
-                player.play_spell_card(spell)
-
-            # Play a super monster card (if possible and chosen)
-            super_monster = player.choose_super_monster_card()
-            if super_monster:
-                print(f"Player {self.current_player_index + 1} summons super monster: {super_monster.color} ({super_monster.name})")
-                player.play_super_monster(super_monster)
-            
-            # Play a base monster card (if space on board and chosen)
-            if len(player.backline) < 3:
-                base_monster = player.choose_base_monster_card()
-                if base_monster:
-                    print(f"Player {self.current_player_index + 1} plays base monster: {base_monster.color} ({base_monster.name})")
-                    player.play_base_monster(base_monster)
+        # Play a super monster card (if possible and chosen)
+        super_monster = player.choose_super_monster_card()
+        if super_monster:
+            print(f"Player {self.current_player_index + 1} summons super monster: {super_monster.color} ({super_monster.name})")
+            player.play_super_monster(super_monster)
         
-            # Attach mana
-            mana_color = random.choice(list(player.available_colors))
-            print(f"generated 1 {mana_color} mana!")
-            player.attach_mana_to_frontline(mana_color)
+        # Play a base monster card (if space on board and chosen)
+        if len(player.backline) < 3:
+            base_monster = player.choose_base_monster_card()
+            if base_monster:
+                print(f"Player {self.current_player_index + 1} plays base monster: {base_monster.color} ({base_monster.name})")
+                player.play_base_monster(base_monster)
+    
+        # Attach mana
+        mana_color = random.choice(list(player.available_colors))
+        print(f"generated 1 {mana_color} mana!")
+        player.attach_mana_to_frontline(mana_color)
 
-            # Attack with frontline monster
-            print(f"Player {self.current_player_index + 1}'s frontline monster attacks!")
-            player.attack_with_frontline(opponent)
+        # Attack with frontline monster
+        print(f"Player {self.current_player_index + 1}'s frontline monster attacks!")
+        player.attack_with_frontline(opponent)
 
         # inbetween turns
         # Check for game over
@@ -171,57 +232,24 @@ class CardGame:
         self.current_turn += 1
         return True
 
-    def prompt_for_card_play(self, player, card_type):
-        if card_type == "spell":
-            spells = [card for card in player.hand if isinstance(card, SpellCard)]
-            if spells:
-                print("Available spell cards:")
-                for i, card in enumerate(spells):
-                    print(f"{i + 1}: {card.name} - Effect: {card.effect}")
-                choice = self.get_choice(len(spells))
-                if choice is not None:
-                    spell = spells[choice]
-                    spell.use(player, self.players[1 - self.current_player_index])
-                    player.play_spell_card(spell)
-        elif card_type == "super_monster":
-            super_monsters = [card for card in player.hand if isinstance(card, SuperMonsterCard) and any(backline_card.name == card.sacrifice for backline_card in player.backline)]
-            if super_monsters:
-                print("Available super monsters:")
-                for i, card in enumerate(super_monsters):
-                    print(f"{i + 1}: {card.name} - Sacrifice: {card.sacrifice}")
-                choice = self.get_choice(len(super_monsters))
-                if choice is not None:
-                    super_monster = super_monsters[choice]
-                    player.play_super_monster(super_monster)
-        elif card_type == "base_monster":
-            if len(player.backline) < 3:
-                base_monsters = [card for card in player.hand if isinstance(card, BaseMonsterCard)]
-                if base_monsters:
-                    print("Available base monsters:")
-                    for i, card in enumerate(base_monsters):
-                        print(f"{i + 1}: {card.name}")
-                    choice = self.get_choice(len(base_monsters))
-                    if choice is not None:
-                        base_monster = base_monsters[choice]
-                        player.play_base_monster(base_monster)
+    def play_card_from_hand(self, player, card):
+        if isinstance(card, SpellCard):
+            if player.can_play_card(card, "spell"):
+                card.use(player, self.players[1 - self.current_player_index])
+                player.play_spell_card(card)
+            else:
+                print("Cannot play this card right now!")
+        elif isinstance(card, SuperMonsterCard):
+            if player.can_play_card(card, "super_monster"):
+                player.play_super_monster(card)
+            else:
+                print("Cannot play this card right now!")
+        elif isinstance(card, BaseMonsterCard):
+            if player.can_play_card(card, "base_monster"):
+                player.play_base_monster(card)
+            else:
+                print("Cannot play this card right now!")
 
-    def get_choice(self, num_choices):
-        while True:
-            try:
-                choice = int(input(f"Choose a card (1-{num_choices}, or 0 to skip): ")) - 1
-                if -1 <= choice < num_choices:
-                    return choice if choice != -1 else None
-            except ValueError:
-                print("Invalid input. Please enter a number.")
-
-    def choose_option(self, num_choices):
-        while True:
-            try:
-                choice = int(input(f"Choose a number (1-{num_choices}): "))
-                if -1 < choice <= num_choices:
-                    return choice
-            except ValueError:
-                print("Invalid input. Please enter a number.")
 
 class Player:
     def __init__(self, is_ai):
@@ -296,14 +324,7 @@ class Player:
 
         # If multiple sacrifices are possible, prompt the player to choose
         if len(eligible_sacrifices) > 1 and not self.is_ai:
-            print("Choose a monster to sacrifice:")
-            for i, (location, monster) in enumerate(eligible_sacrifices):
-                print(f"{i + 1}: {monster.name} (Location: {location}, Mana: {monster.mana_attached})")
-            choice = self.get_choice(None, len(eligible_sacrifices))
-            if choice is None:
-                print("No sacrifice made, super monster cannot be played.")
-                return
-            location, sacrifice = eligible_sacrifices[choice]
+            location, sacrifice = eligible_sacrifices[0]
         else:
             location, sacrifice = eligible_sacrifices[0]
 
@@ -345,35 +366,11 @@ class Player:
 
     def attach_mana_to_frontline(self, mana_color):
         if mana_color not in self.frontline.mana_attached:
-            input("An invalid mana type was generated!")
+            print("An invalid mana type was generated!")
             return
         self.frontline.mana_attached[mana_color] += 1
         self.can_attach_mana = False
         print(f"Attached 1 {mana_color} mana to {self.frontline.name}")
-
-    def retreat_frontline(self):
-        retreat_status = self.frontline.decrease_mana(self.frontline.retreat_cost)
-        if not retreat_status:
-            print("Not enough mana to retreat!")
-            return
-        # If backline has multiple monsters, prompt the player to choose
-        if len(self.backline) > 1 and not self.is_ai:
-            print("Choose a monster to send out:")
-            for i, monster in enumerate(self.backline):
-                print(f"{i + 1}: {monster.name} (Mana: {monster.mana_attached})")
-            choice = self.get_choice(None, len(self.backline))
-            if choice is None:
-                print("Chose not to retreat.")
-                return
-            new_monster = self.backline[choice]
-        else:
-            new_monster = self.backline[0]
-        
-        self.frontline.reset_bonuses()
-        self.backline.append(self.frontline)
-        self.frontline = new_monster
-        self.backline.remove(new_monster)
-        self.can_retreat = False
 
     def attack_with_frontline(self, opponent):
         if not opponent.frontline:
@@ -413,15 +410,6 @@ class Player:
             print(f'Sent out {self.frontline.name}!')
         else:
             self.frontline = None
-
-    def get_choice(self, num_choices):
-        while True:
-            try:
-                choice = int(input(f"Choose a card (1-{num_choices}, or 0 to skip): ")) - 1
-                if -1 <= choice < num_choices:
-                    return choice if choice != -1 else None
-            except ValueError:
-                print("Invalid input. Please enter a number.")
 
 class Deck:
     def __init__(self):
@@ -597,7 +585,7 @@ def type_effectiveness(attacker_color, defender_color):
         return 20
     return 0
 
-# Example game loop
-game = CardGame()
-while game.next_turn():
-    pass
+# Initialize and run the UI
+root = tk.Tk()
+game_ui = CardGameUI(root)
+root.mainloop()
