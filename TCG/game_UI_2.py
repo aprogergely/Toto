@@ -1,25 +1,26 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import simpledialog
-from tkinter import messagebox
 import random
 
 
 class Card:
-    def __init__(self, name, card_type, stats):
+    def __init__(self, name, card_type, stats=None, requires_target=False):
         self.name = name
-        self.card_type = card_type
-        self.stats = stats
+        self.card_type = card_type  # "Monster" or "Spell"
+        self.stats = stats if stats else {}  # Monsters have stats, spells may not
+        self.requires_target = requires_target  # Only applicable for spells
 
     def __str__(self):
-        return f"{self.name} ({self.card_type}) - {self.stats}"
+        if self.card_type == "Monster":
+            return f"{self.name} ({self.card_type}) - {self.stats}"
+        return f"{self.name} ({self.card_type})"
 
 
 class Player:
     def __init__(self, name):
         self.name = name
         self.hand = []
-        self.deck = [Card(f"Card {i+1}", "Basic", {"Attack": random.randint(1, 5), "Health": random.randint(1, 5)}) for i in range(30)]
+        self.deck = [Card(f"Card {i+1}", "Monster" if random.randint(1, 3)==2 else "Spell", {"Attack": random.randint(1, 5), "Health": random.randint(1, 5)}) for i in range(15)]
         self.frontline = None
         self.backline = []
         self.score = 0
@@ -36,20 +37,39 @@ class CardGame:
         self.opponent = Player("Opponent")
         self.turn = "Player"  # Tracks whose turn it is
 
-    def play_card_from_hand(self, player, card_index, to_frontline=False):
+    def play_spell(self, player, card_index, target=None):
         card = player.hand.pop(card_index)
+        if card.card_type != "Spell":
+            print("Invalid action: Only spells can be played this way.")
+            player.hand.append(card)  # Return to hand if invalid
+            return
+
+        if card.requires_target and not target:
+            print(f"{card.name} requires a target!")
+            player.hand.append(card)  # Return to hand if no target provided
+        else:
+            print(f"Playing {card.name} on {target if target else 'the board'}")
+            # Implement spell effects here
+
+    def play_monster(self, player, card_index, to_frontline=False):
+        card = player.hand[card_index]
+        if card.card_type != "Monster":
+            print("Invalid action: Only monsters can be played this way.")
+            return
+
+        player.hand.pop(card_index)
         if to_frontline:
             if player.frontline is None:
                 player.frontline = card
             else:
                 print("Frontline is occupied!")
-                player.hand.append(card)  # Return the card to the hand
+                player.hand.append(card)  # Return to hand if invalid
         else:
             if len(player.backline) < 3:
                 player.backline.append(card)
             else:
                 print("Backline is full!")
-                player.hand.append(card)  # Return the card to the hand
+                player.hand.append(card)  # Return to hand if invalid
 
     def attach_mana(self, card):
         print(f"Attaching mana to {card.name}")
@@ -159,16 +179,38 @@ class CardGameUI:
             self.player_frontline[0].config(text="Empty", bg="white", command=None)
 
     def show_card_popup(self, area, index):
-        actions = {
-            "hand": ["Play to Backline", "Play to Frontline", "Cancel"],
-            "backline": ["Attach Mana", "Retreat", "Cancel"],
-            "frontline": ["Attack", "Retreat", "Cancel"]
-        }
-        choice = self.select_from_list(f"Select an action for {area} card {index + 1}:", actions[area])
+        if area == "hand":
+            card = self.game.player.hand[index] 
+        elif area == "frontline":
+            card = self.game.player.frontline
+        elif area == "backline":
+            card = self.game.player.backline[index]
+        else:
+            card = None
+        actions = []
+
+        if area == "hand" and card:
+            if card.card_type == "Monster":
+                actions = ["Play to Backline", "Play to Frontline", "Cancel"]
+            elif card.card_type == "Spell":
+                actions = ["Play Spell", "Cancel"]
+        elif area == "frontline" and card:
+            actions = ["Attack", "Attach Mana", "Retreat", "Cancel"]
+        elif area == "backline" and card:
+            actions = ["Attach Mana", "Cancel"]
+
+        choice = self.select_from_list(f"Select an action for {card.name}:", actions)
+
         if choice == "Play to Backline":
-            self.game.play_card_from_hand(self.game.player, index)
+            self.game.play_monster(self.game.player, index)
         elif choice == "Play to Frontline":
-            self.game.play_card_from_hand(self.game.player, index, to_frontline=True)
+            self.game.play_monster(self.game.player, index, to_frontline=True)
+        elif choice == "Play Spell":
+            if card.requires_target:
+                target = self.select_target_popup()
+                self.game.play_spell(self.game.player, index, target)
+            else:
+                self.game.play_spell(self.game.player, index)
         elif choice == "Attach Mana":
             self.game.attach_mana(self.game.player.backline[index])
         elif choice == "Retreat":
@@ -181,10 +223,50 @@ class CardGameUI:
             print("Attack logic here.")
         self.refresh_board_state()
 
+    def select_target_popup(self):
+        # Show a popup to let the player choose a target (player or opponent cards)
+        popup = tk.Toplevel(self.root)
+        popup.title("Select a Target")
+        selected_target = tk.StringVar(value="Cancel")
+
+        def on_close():
+            selected_target.set("Cancel")
+            popup.destroy()
+
+        popup.protocol("WM_DELETE_WINDOW", on_close)
+
+        # Add player's frontline and backline
+        tk.Label(popup, text="Player's Monsters:").pack()
+        if self.game.player.frontline:
+            tk.Radiobutton(popup, text=f"Frontline: {self.game.player.frontline}",
+                           variable=selected_target,
+                           value="Player Frontline").pack(anchor="w")
+        for i, card in enumerate(self.game.player.backline):
+            tk.Radiobutton(popup, text=f"Backline {i + 1}: {card}",
+                           variable=selected_target,
+                           value=f"Player Backline {i + 1}").pack(anchor="w")
+
+        # Add opponent's frontline and backline
+        tk.Label(popup, text="Opponent's Monsters:").pack()
+        if self.game.opponent.frontline:
+            tk.Radiobutton(popup, text=f"Frontline: {self.game.opponent.frontline}",
+                           variable=selected_target,
+                           value="Opponent Frontline").pack(anchor="w")
+        for i, card in enumerate(self.game.opponent.backline):
+            tk.Radiobutton(popup, text=f"Backline {i + 1}: {card}",
+                           variable=selected_target,
+                           value=f"Opponent Backline {i + 1}").pack(anchor="w")
+
+        tk.Button(popup, text="OK", command=popup.destroy).pack()
+
+        popup.grab_set()
+        self.root.wait_window(popup)
+        return selected_target.get()
+
     def select_from_list(self, title, options):
         popup = tk.Toplevel(self.root)
         popup.title(title)
-        selected_action = tk.StringVar(value="Cancel")  # Default to "Cancel"
+        selected_action = tk.StringVar(value=options[0])
 
         def on_close():
             # Ensure "Cancel" is selected if the window is closed without confirmation
