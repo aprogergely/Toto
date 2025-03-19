@@ -4,8 +4,12 @@ import csv
 from collections import defaultdict
 import time
 
+TOURNAMENT_ID="littlecup"
+PLACEHOLDER_PLAYER="nobody" # when someone gets a "bye", we use this as a dummy player name they have beaten
+
 def get_round_data(round_number):
-    url = f"https://play.limitlesstcg.com/tournament/67b7c3e178c0b3231881b5e4/pairings?round={round_number}"
+    """Collects the results of every match into an array"""
+    url = f"https://play.limitlesstcg.com/tournament/{TOURNAMENT_ID}/pairings?round={round_number}"
     response = requests.get(url)
     if response.status_code != 200:
         print(f"Failed to fetch round {round_number}")
@@ -20,10 +24,10 @@ def get_round_data(round_number):
     matches = []
     for tr in table.find_all('tr'):
         match_id = tr.get('data-match')
-        winner_id = tr.get('data-winner')  # 0 0 if havent played yet -1 if cancelled
+        winner_id = tr.get('data-winner')  # 0 if havent played yet -1 if cancelled, player name otherwise
 
         players = tr.find_all('td', class_=['player', 'player unl', 'player winner', 'player tie'])
-        if len(players) == 1:
+        if len(players) == 1: # len = 1 means a bye
             player1 = {
                 'id': players[0].get('data-id'),
                 'wins': int(players[0].get('data-wins', 0)),
@@ -32,7 +36,7 @@ def get_round_data(round_number):
             }
 
             player2 = {
-                'id': "nobody",
+                'id': PLACEHOLDER_PLAYER,
                 'wins': 0,
                 'losses': 0,
                 'ties': 0
@@ -65,12 +69,17 @@ def get_round_data(round_number):
                 'winner_id': winner_id,
                 'players': [player1, player2]
             })
-        else:
+        else: # empty row in table, or more commonly empty table for unavailable rounds
             print(f"Unexpected number of players in match {match_id}")
 
+    print(f"Scraped {len(matches)} matches from round {round_number}")
     return matches
 
+# get player scores out of the collected match data
 def analyze_tournament_data(tournament_data):
+    """Get player scores out of the collected match data.
+    Unplayed matches are treated the same as ties initially, and then ties in the most recent round are changed to unplayed.
+    """
     player_stats = defaultdict(lambda: {"wins": 0, "losses": 0, "unplayed": 0, "ties": 0, "games_played": 0, "opponents": []})
     
     # Process match results
@@ -103,20 +112,21 @@ def analyze_tournament_data(tournament_data):
                 player_stats[p2]["wins"] += 1
                 player_stats[p1]["losses"] += 1
     
-    # Compute winrate and opponent winrates
+    # Compute winrates
     for player, stats in player_stats.items():
+        # Compute player winrate
         played = stats["games_played"]
         wins = stats["wins"]
         if played > 0:
             stats["winrate"] = max(wins / played, 0.25)
         else:
-            stats["winrate"] = 0.25
+            stats["winrate"] = 0.25 # winrate has a lower bound of 0.25 for droppers
         
         # Compute opponent winrates
         min_opponent_winrates = []
         max_opponent_winrates = []
         for opp in stats["opponents"]:
-            if opp != "nobody":
+            if opp != PLACEHOLDER_PLAYER:
                 opp_played = player_stats[opp]["games_played"]
                 opp_wins = player_stats[opp]["wins"]
                 opp_unplayed = player_stats[opp]["unplayed"]
@@ -136,23 +146,27 @@ def save_to_csv(player_database, filename):
             writer.writerow([player, stats["wins"], stats["losses"], stats["ties"], stats["games_played"], 
                              stats["winrate"], stats["min_opp_winrate"], stats["max_opp_winrate"]])
 
-def scrape_and_analyze_tournament(rounds, output_file):
-    print(f"Scraping tournament data for {rounds} rounds...")
+def scrape_and_analyze_tournament(output_file):
+    print(f"Scraping tournament data for {TOURNAMENT_ID}...")
     tournament_data = {}
     
-    for round_number in range(1, rounds + 1):
+    round_number = 1
+    scraped_round_data = [{}]
+    # scrape data for every round until we run into a round that has no available data
+    while scraped_round_data != []:
         print(f"Scraping round {round_number}...")
-        tournament_data[f'Round {round_number}'] = get_round_data(round_number)
-        time.sleep(1)  # Respectful scraping
+        scraped_round_data = get_round_data(round_number)
+        if scraped_round_data != []:
+            tournament_data[f'Round {round_number}'] = scraped_round_data
+            time.sleep(1)
+            round_number += 1
     
     print("Analyzing tournament data...")
     player_database = analyze_tournament_data(tournament_data)
     
     print(f"Saving results to {output_file}...")
     save_to_csv(player_database, output_file)
-    print("Done!")
 
 # Run the script
 if __name__ == "__main__":
-    rounds_to_scrape = 7  # Adjust based on the tournament
-    scrape_and_analyze_tournament(rounds_to_scrape, "tournament_results.csv")
+    scrape_and_analyze_tournament("tournament_results.csv")
