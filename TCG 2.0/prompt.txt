@@ -1,0 +1,70 @@
+I'd like to make a card game in python.
+
+"""The game can be played by two players.
+
+Players have 20 cards in their [Deck].
+Before the game begins, both players draw 5 cards from their [Deck], including at least one [Base Monster card]. Then, choose a [Base Monster Card] to put into their [Frontline].
+
+Players take turns until one player wins the game.
+After a player's turn ends, and before the next player's turn begins, theres a separate [Checkup phase] when:
+*win conditions are checked
+*some stat modifiers from [Spell Cards] and Monster [Skills] are reset
+*the next player draws a card from their [Deck] if they have any left.
+*the next player receives a [Mana] to be attached to one of their Monsters later.
+
+There are the following type of cards:
+*[Base Monster Card]
+*[Super Monster Card]
+*[Spell Card]
+
+[Base Monster Cards] can be placed onto the [Backline] from [Hand] during a player's turn.
+They have stats such as: [Name], [Element], [Health], [Damage], [Attack Cost], [Mana count], [Retreat Cost], [Skill].
+Monsters in the [Frontline] can attack once per turn if their [Mana count] exceeds their [Attack Cost].
+An attack decreases the [Health] of the Monster in the opponent's [Frontline] by an amount equal to the attacker's [Damage] attribute.
+Monsters can switch places with another monster in the [Backline] once per turn if their [Mana count] exceeds their [Retreat Cost].
+Monsters can attempt to activate the effect of their [Skill] once per turn. Depending on the [Skill] it may have a wide range of effects or do nothing if the conditions arent met.
+An example skill effect would be choosing one of the opponent's [Backline] Monster and doing 1 damage to it (doesn't count as an attack), which would fail if the opponent has no Monsters in the [Backline].
+
+[Super Monster Cards] are identical to [Base Monster Cards] except that they need a [Sacrifice] to be placed into the [Backline].
+They have the additional stat [Sacrifice] specifying the [Name] of the Monster that needs to be sacrificed.
+When a [Super Monster Card] is placed into the [Backline] from the player's [Hand], the [Sacrifice] is placed into the [Graveyard].
+If multiple Monsters can be sacrificed, the player chooses one of them.
+[SuperMonster Cards] can be played even when the board is full, since playing them always removes another card so the number of Monsters on the board doesnt increase.
+The [Frontline] Monster can also be chosen as a sacrifice, after which the [Super Monster Card] will be automatically promoted to become the new [Frontline] Monster.
+
+[Spell Cards] are placed into the [Graveyard] directly after being played and have an effect similar to Monster [Skills], including but not limited to: 
+*Draw a card
+*Increase your [Frontline] Monster's attack by 1
+*Heal a Monster of your choice by 1
+*Decrease your [Frontline] Monster's [Retreat Cost] by 1
+*Decrease your [Frontline] Monster's [Attack Cost] by 1
+*Choose a Monster from your opponent's [Backline] and switch it with their [Frontline]
+*Your opponent can't play [Spell Cards] on their next turn
+*Place a Monster card from your [Graveyard] into your [Hand]
+
+During the turn of a player they can perform the following actions if not blocked by an effect of another card:
+*Place any amount of [Super Monster Cards] from their [Hand] onto their [Backline] if the appropriate sacrifice is on the board
+*Place any amount of [Base Monster Cards] from their [Hand] onto their [Backline]
+*Play any amount of [Spell Cards]
+*Attach the [Mana] to a Monster of their choice
+*Activate any amount of Monster [Skills] (once per skill per turn)
+*Retreat the [Frontline] Monster if it has the neccessary [Mana Count], and promote a different Monster from their [Backline] (once per turn)
+*Attack with their [Frontline] Monster if it has the neccessary [Mana Count] (once per turn)
+
+If a Monster's [Health] drops to 0 or below, then during the [Checkup phase], they are placed into their owner's [Graveyard] and the attacking player receives 1 point.
+If they also reach 3 points by doing this, they win the game."""
+
+This game requires two players to play, but I intend to create a single-player mode against an AI.
+It is important that the game would store data in a way that makes it easy to train a machine-learning model on it.
+During training I'd likely train by letting two models play against eachother with no human player.
+
+It is also important that the game would have a basic UI on release featuring the following data, which is also what the model would have access to during training:
+*Cards in the player's hand
+*Cards in the player's [Backline], the player's [Frontline], the opponent's [Backline], the opponent's [Frontline]
+*Cards in the player's [Graveyard] and the opponent's [Graveyard]
+*All the stats of these cards
+*Amount of cards remaining in the player's deck and the opponent's deck and opponent's hand, but not what they are
+*Current score of the player and the opponent
+
+Please think carefully on what python libraries are ideal for this task and what kind of machine-learning model would best fit my requirements.
+Create an outline of the script for the cardgame.
